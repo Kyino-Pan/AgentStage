@@ -186,6 +186,7 @@ function renderHome(registry) {
 }
 
 function renderAbout(registry) {
+  const userCount = registry.users.length;
   const pageCount = registry.users.reduce((count, user) => count + user.pages.length, 0);
 
   app.innerHTML = `
@@ -193,45 +194,104 @@ function renderAbout(registry) {
       ${renderCornerLink("返回首页", "/")}
       <section class="about-card fade-in">
         <div class="home-badge">About AgentStage</div>
-        <h1>面向人类浏览的共享页面门户</h1>
-        <p class="about-lead">AgentStage 把多个 agent 在不同工作区里生成的静态页面挂到同一个本地入口下，统一提供导航、侧边栏、热更新和备份。</p>
+        <h1>这是一个给你浏览内容的入口</h1>
+        <p class="about-lead">不同空间里的页面会被整理到这里。你不需要关心它们原本来自哪里，也不需要记住复杂路径，只要选中一个空间进入查看即可。</p>
 
         <div class="about-grid">
           <article class="about-block">
-            <h2>项目职责</h2>
-            <p>统一挂载页面，而不是替代页面工程本身。真实 HTML / CSS / JS / 图片尽量继续保留在源工作区。</p>
+            <h2>先选空间</h2>
+            <p>首页只做一件事：帮你找到这次想看的那组内容。点进去后，会默认打开这个空间最近的一页。</p>
           </article>
           <article class="about-block">
-            <h2>热更新</h2>
-            <p>服务支持运行中的页面注册更新；源工作区内容发生变化时，刷新当前视图即可看到最新结果。</p>
+            <h2>像文件夹一样看</h2>
+            <p>左边的侧栏会按空间分组列出页面。展开后可以在同一组内容之间快速来回切换，不需要反复回首页。</p>
           </article>
           <article class="about-block">
-            <h2>展示约束</h2>
-            <p>导航和包装层尽量克制，避免抢占嵌入页面的空间；默认约束由 skill 描述文件维护，可由用户追加定义。</p>
+            <h2>需要时再刷新</h2>
+            <p>如果有人刚刚替你更新了内容，点一下页面左上方的“刷新当前视图”，就能看到最新版本。</p>
           </article>
           <article class="about-block">
-            <h2>当前状态</h2>
-            <p>${registry.users.length} 个 userSpace，${pageCount} 个页面。最近一次同步时间是 ${escapeHtml(formatDate(registry.updatedAt))}。</p>
+            <h2>现在这里有</h2>
+            <p>${userCount} 个空间，${pageCount} 个页面。最近一次整理时间是 ${escapeHtml(formatDate(registry.updatedAt))}。</p>
           </article>
         </div>
 
-        <div class="about-list">
-          <div class="about-list-row">
-            <span>共享地址</span>
-            <strong>http://127.0.0.1:4318</strong>
-          </div>
-          <div class="about-list-row">
-            <span>页面注册方式</span>
-            <strong><code>register-page</code> 或 <code>POST /api/register</code></strong>
-          </div>
-          <div class="about-list-row">
-            <span>人类入口</span>
-            <strong>首页只负责选择 userSpace，其余说明收敛在本页</strong>
-          </div>
+        <div class="about-note">
+          <p>把这里当成一个安静的目录就好：选空间、看内容、在需要时刷新。至于这些页面是如何被接进来的，不需要你操心。</p>
         </div>
       </section>
     </main>
   `;
+}
+
+function pageShellKey(userId, pageId) {
+  return `${userId}/${pageId}`;
+}
+
+function ensurePageShell() {
+  let shell = app.querySelector(".viewer-shell-page");
+  if (shell) {
+    return shell;
+  }
+
+  app.innerHTML = `
+    <main class="viewer-shell-page">
+      <div class="workspace-layout">
+        <aside class="finder-sidebar fade-in">
+          <div class="sidebar-caption">User Spaces</div>
+          <div class="tree-root"></div>
+        </aside>
+
+        <section class="viewer-region fade-in">
+          <header class="viewer-topbar">
+            <div class="viewer-actions">
+              <a class="chrome-button" href="/" data-link>返回导航首页</a>
+              <button type="button" class="chrome-button" data-action="refresh-current">刷新当前视图</button>
+            </div>
+            <a class="subtle-link" href="/about" data-link>关于</a>
+          </header>
+
+          <div class="viewer-frame">
+            <iframe loading="lazy" referrerpolicy="no-referrer"></iframe>
+          </div>
+        </section>
+      </div>
+    </main>
+  `;
+
+  shell = app.querySelector(".viewer-shell-page");
+  return shell;
+}
+
+function updatePageShell(registry, user, currentPage) {
+  state.expandedUsers.add(user.id);
+  ensurePageShell();
+
+  const treeRoot = app.querySelector(".tree-root");
+  if (treeRoot) {
+    treeRoot.innerHTML = buildSidebarTree(registry, user.id, currentPage.id);
+  }
+
+  const iframe = app.querySelector(".viewer-frame iframe");
+  if (!iframe) {
+    return;
+  }
+
+  const nextPageKey = pageShellKey(user.id, currentPage.id);
+  const nextRefreshNonce = String(state.iframeRefreshNonce);
+  const nextSrc = withCacheBust(currentPage.liveUrl, state.iframeRefreshNonce);
+  const shouldUpdateFrame =
+    iframe.dataset.pageKey !== nextPageKey ||
+    iframe.dataset.refreshNonce !== nextRefreshNonce ||
+    iframe.getAttribute("src") !== nextSrc;
+
+  iframe.title = currentPage.title;
+  iframe.dataset.pageKey = nextPageKey;
+  iframe.dataset.refreshNonce = nextRefreshNonce;
+
+  if (shouldUpdateFrame) {
+    iframe.setAttribute("src", nextSrc);
+  }
 }
 
 function buildSidebarTree(registry, activeUserId, activePageId) {
@@ -278,39 +338,7 @@ function buildSidebarTree(registry, activeUserId, activePageId) {
 }
 
 function renderPage(registry, user, currentPage) {
-  state.expandedUsers.add(user.id);
-
-  app.innerHTML = `
-    <main class="viewer-shell-page">
-      <div class="workspace-layout">
-        <aside class="finder-sidebar fade-in">
-          <div class="sidebar-caption">User Spaces</div>
-          <div class="tree-root">
-            ${buildSidebarTree(registry, user.id, currentPage.id)}
-          </div>
-        </aside>
-
-        <section class="viewer-region fade-in">
-          <header class="viewer-topbar">
-            <div class="viewer-actions">
-              <a class="chrome-button" href="/" data-link>返回导航首页</a>
-              <button type="button" class="chrome-button" data-action="refresh-current">刷新当前视图</button>
-            </div>
-            <a class="subtle-link" href="/about" data-link>关于</a>
-          </header>
-
-          <div class="viewer-frame">
-            <iframe
-              title="${escapeHtml(currentPage.title)}"
-              src="${escapeHtml(withCacheBust(currentPage.liveUrl, state.iframeRefreshNonce))}"
-              loading="lazy"
-              referrerpolicy="no-referrer"
-            ></iframe>
-          </div>
-        </section>
-      </div>
-    </main>
-  `;
+  updatePageShell(registry, user, currentPage);
 }
 
 function renderNotFound() {
