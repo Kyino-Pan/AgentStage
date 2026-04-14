@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "updated_at": "2026-04-14T00:00:00Z",
+  "author": "agentstage-portal",
+  "mode": "default",
+  "constraints": [
+    "Prioritize human readability and scanning over dense data packing.",
+    "Keep a single clear focal area per view.",
+    "Use concise headings and avoid redundant chrome.",
+    "Prefer high-contrast text and accessible color pairings.",
+    "Preserve enough whitespace to separate navigation from content.",
+    "Avoid decorative UI that competes with the embedded page content."
+  ],
+  "forbidden_patterns": [
+    "Generic username labels not derived from workspace folder names.",
+    "Overcrowded sidebars that hide page titles or truncate navigation context."
+  ],
+  "notes": "Skill-level defaults. Task-level user instructions can override without mutating this file unless explicitly requested."
+}

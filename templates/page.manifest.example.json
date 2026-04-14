@@ -1,0 +1,15 @@
+{
+  "user": {
+    "id": "research-agent",
+    "name": "Research Agent",
+    "description": "负责研究与报告页面"
+  },
+  "page": {
+    "id": "phase-review",
+    "title": "Phase Review",
+    "description": "一次阶段性结论展示"
+  },
+  "workspaceRoot": "/Users/colaa/Projects/SomeWorkspace",
+  "sourceRoot": "/Users/colaa/Projects/SomeWorkspace/out",
+  "entry": "/Users/colaa/Projects/SomeWorkspace/out/index.html"
+}

@@ -1,0 +1,79 @@
+:root {
+  color-scheme: light;
+  --status-bg: #fffdf8;
+  --status-ink: #29211c;
+  --status-accent: #b45309;
+  --status-line: rgba(41, 33, 28, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Avenir Next", "Segoe UI", "PingFang SC", sans-serif;
+  color: var(--status-ink);
+  background:
+    radial-gradient(circle at top left, rgba(180, 83, 9, 0.14), transparent 32%),
+    linear-gradient(180deg, #fffdf8 0%, #fbf3e4 100%);
+}
+
+.status-shell {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 2rem 1.2rem 3rem;
+}
+
+.status-banner {
+  padding: 1.5rem;
+  border-radius: 28px;
+  border: 1px solid var(--status-line);
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.status-kicker {
+  margin: 0 0 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--status-accent);
+  font-size: 0.78rem;
+}
+
+.status-banner h1 {
+  margin: 0;
+  line-height: 0.96;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+}
+
+.status-banner p {
+  max-width: 44rem;
+  line-height: 1.72;
+  color: rgba(41, 33, 28, 0.78);
+}
+
+.status-list {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.status-item {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1.05rem 1.15rem;
+  border-radius: 18px;
+  border: 1px solid var(--status-line);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.status-item strong {
+  font-size: 1rem;
+}
+
+.status-item span {
+  color: rgba(41, 33, 28, 0.78);
+  line-height: 1.65;
+}

@@ -1,0 +1,21 @@
+{
+  "name": "agent-stage",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node server.mjs",
+    "register": "node scripts/register-page.mjs",
+    "daemon:start": "node scripts/daemon-start.mjs",
+    "daemon:stop": "node scripts/daemon-stop.mjs",
+    "daemon:status": "node scripts/daemon-status.mjs",
+    "launchd:install": "node scripts/launchd-install.mjs",
+    "launchd:status": "node scripts/launchd-status.mjs",
+    "launchd:uninstall": "node scripts/launchd-uninstall.mjs",
+    "bootstrap:machine": "node scripts/bootstrap-machine.mjs",
+    "skill:install": "node scripts/global-skill.mjs install",
+    "skill:status": "node scripts/global-skill.mjs status",
+    "skill:uninstall": "node scripts/global-skill.mjs uninstall"
+  }
+}

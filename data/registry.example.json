@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "updatedAt": "2026-04-14T00:00:00.000Z",
+  "users": [
+    {
+      "id": "demo-user",
+      "name": "demo-user",
+      "description": "示例发布者，用来演示默认导航与最后挂载页跳转。",
+      "pages": [
+        {
+          "id": "hot-sync-lab",
+          "title": "Hot Sync Lab",
+          "description": "运行中热注册进来的示例页面，用来验证首页自动同步。",
+          "sourceRoot": "__PROJECT_ROOT__/examples/demo-user/hot-sync-lab",
+          "entryPath": "index.html",
+          "backupHtmlPath": "backups/demo-user/hot-sync-lab/entry.latest.html",
+          "createdAt": "2026-04-13T18:25:44.716Z",
+          "updatedAt": "2026-04-13T18:25:44.716Z"
+        },
+        {
+          "id": "status-wall",
+          "title": "Status Wall",
+          "description": "第二个示例页面，用来验证同一用户多页面侧边栏跳转与热更新。",
+          "sourceRoot": "__PROJECT_ROOT__/examples/demo-user/status-wall",
+          "entryPath": "index.html",
+          "backupHtmlPath": "backups/demo-user/status-wall/entry.latest.html",
+          "createdAt": "2026-04-13T18:07:45.604Z",
+          "updatedAt": "2026-04-13T18:22:01.523Z"
+        },
+        {
+          "id": "welcome-dashboard",
+          "title": "Welcome Dashboard",
+          "description": "示例页面，展示统一包装层、侧边栏和 live source 挂载方式。",
+          "sourceRoot": "__PROJECT_ROOT__/examples/demo-user/welcome-dashboard",
+          "entryPath": "index.html",
+          "backupHtmlPath": "backups/demo-user/welcome-dashboard/entry.latest.html",
+          "createdAt": "2026-04-14T00:00:00.000Z",
+          "updatedAt": "2026-04-13T18:08:40.154Z"
+        }
+      ]
+    }
+  ]
+}

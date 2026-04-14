@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Status Wall</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="status-shell">
+      <section class="status-banner">
+        <p class="status-kicker">Second Demo</p>
+        <h1>同一用户下的第二个页面</h1>
+        <p>它的存在是为了验证 AgentStage 的共享侧边栏确实能在同一个用户的多个页面之间快速切换。</p>
+      </section>
+
+      <section class="status-list">
+        <article class="status-item">
+          <strong>源目录挂载</strong>
+          <span>页面资产保持在当前目录，portal 只做代理展示。</span>
+        </article>
+        <article class="status-item">
+          <strong>统一导航</strong>
+          <span>左侧切换逻辑由包装层负责，源页面本身可以保持纯内容化。</span>
+        </article>
+        <article class="status-item">
+          <strong>HTML 备份</strong>
+          <span>重新注册时会在 AgentStage 的 backups 目录留下新版本。</span>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

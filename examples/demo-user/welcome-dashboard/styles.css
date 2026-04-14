@@ -1,0 +1,79 @@
+:root {
+  color-scheme: light;
+  --demo-bg: #fffefb;
+  --demo-ink: #1f2937;
+  --demo-accent: #0f766e;
+  --demo-line: rgba(31, 41, 55, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Avenir Next", "Segoe UI", "PingFang SC", sans-serif;
+  color: var(--demo-ink);
+  background:
+    radial-gradient(circle at top right, rgba(15, 118, 110, 0.12), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #f8fafb 100%);
+}
+
+.demo-shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2rem 1.2rem 3rem;
+}
+
+.demo-hero {
+  padding: 1.6rem;
+  border: 1px solid var(--demo-line);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.demo-eyebrow {
+  margin: 0 0 0.8rem;
+  color: var(--demo-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.82rem;
+}
+
+.demo-hero h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 0.96;
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+}
+
+.demo-copy {
+  max-width: 56rem;
+  line-height: 1.72;
+  color: rgba(31, 41, 55, 0.8);
+}
+
+.demo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.demo-card {
+  padding: 1.2rem;
+  border-radius: 20px;
+  border: 1px solid var(--demo-line);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.demo-card h2 {
+  margin-top: 0;
+  font-size: 1.08rem;
+}
+
+.demo-card p {
+  line-height: 1.65;
+  color: rgba(31, 41, 55, 0.8);
+}

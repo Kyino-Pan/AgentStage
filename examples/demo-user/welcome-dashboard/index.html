@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Welcome Dashboard</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="demo-shell">
+      <section class="demo-hero">
+        <p class="demo-eyebrow">Mounted Demo</p>
+        <h1>这是挂在 AgentStage 里的示例页面</h1>
+        <p class="demo-copy">它本身只是一个普通静态 HTML 页面，资源也仍然放在自己的源目录中。真正的侧边栏和返回导航按钮由 AgentStage 的包装层统一提供，所以接入方不需要重复造轮子。</p>
+      </section>
+
+      <section class="demo-grid">
+        <article class="demo-card">
+          <h2>入口 HTML 已被备份</h2>
+          <p>注册时会自动复制到 AgentStage 的 <code>backups/</code> 目录下，方便追踪和回退。</p>
+        </article>
+        <article class="demo-card">
+          <h2>资源依旧在源目录</h2>
+          <p>当前示例的样式文件依然是通过相对路径从这个目录加载，而不是复制到 portal 主目录里。</p>
+        </article>
+        <article class="demo-card">
+          <h2>适合阶段汇报页面</h2>
+          <p>无论是研究结论、实施回顾、方案对比还是交互原型，都可以直接作为静态页面挂进来。</p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

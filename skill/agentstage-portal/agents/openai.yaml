@@ -1,0 +1,6 @@
+interface:
+  display_name: "AgentStage Portal"
+  short_description: "Publish webpages into the shared AgentStage portal"
+  default_prompt: "Use $agentstage-portal to publish this result as a page in the shared AgentStage portal. Derive --user from the page author's workspace folder basename, apply default constraints from the skill descriptor, and give me the final route."
+policy:
+  allow_implicit_invocation: true
