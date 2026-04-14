@@ -16,7 +16,7 @@ description: "Use when the user wants content presented as a webpage through the
 
 - Project root is the repository that contains this skill under `skill/agentstage-portal/`.
 - Shared portal URL defaults to `http://127.0.0.1:4318`.
-- Read project handbook only when needed: `<project-root>/README.md`
+- Read project handbook only when needed: `<project-root>/README_AGENT.md`
 - Read project memory rules only when needed: `<project-root>/AGENTS.md`
 
 ## Core contract
@@ -104,5 +104,5 @@ Consumption rule for agents:
 
 ## Read more only when needed
 
-- For architecture, API routes, prompt templates, and troubleshooting, read `<project-root>/README.md`.
+- For architecture, API routes, prompt templates, and troubleshooting, read `<project-root>/README_AGENT.md`.
 - For portal rules that future agents should preserve, read `<project-root>/AGENTS.md`.
