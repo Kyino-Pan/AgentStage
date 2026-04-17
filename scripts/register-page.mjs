@@ -27,12 +27,12 @@ function parseArgs(argv) {
 function usage() {
   return [
     "Usage:",
-    "  node scripts/register-page.mjs --user \"workspace-folder-name\" --page \"Phase Review\" --entry /abs/path/to/index.html",
+    "  node scripts/register-page.mjs --user-id \"workspace-folder-name\" --user-name \"workspace-folder-name\" --workspace-root /abs/path/to/workspace --page \"Phase Review\" --entry /abs/path/to/index.html",
     "  node scripts/register-page.mjs --manifest ./templates/page.manifest.example.json",
     "  node scripts/register-page.mjs --server http://127.0.0.1:4318 --manifest ./templates/page.manifest.example.json",
     "",
     "Optional flags:",
-    "  --server, --user-id, --user-name, --user-description",
+    "  --server, --user, --user-id, --user-name, --user-description",
     "  --page-id, --title, --description, --workspace-root, --source-root"
   ].join("\n");
 }
@@ -65,7 +65,7 @@ function buildPayloadFromOptions(options, manifest) {
     sourceRoot: options["source-root"] ?? manifest["source-root"] ?? manifest.sourceRoot,
     entry: options.entry ?? manifest.entry,
     userName: options["user-name"] ?? options.user,
-    userId: options["user-id"],
+    userId: options["user-id"] ?? options.user,
     userDescription: options["user-description"],
     pageTitle: options.title ?? options.page,
     pageId: options["page-id"],

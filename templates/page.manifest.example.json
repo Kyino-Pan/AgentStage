@@ -1,8 +1,8 @@
 {
   "user": {
-    "id": "research-agent",
-    "name": "Research Agent",
-    "description": "负责研究与报告页面"
+    "id": "someworkspace",
+    "name": "SomeWorkspace",
+    "description": "SomeWorkspace 下的研究与报告页面"
   },
   "page": {
     "id": "phase-review",

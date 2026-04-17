@@ -23,7 +23,7 @@ $agentstage-portal
 1. 这是一个“portal + wrapper”架构，不是每个页面自己的独立站点。
 2. 其他 agent 最好产出静态 HTML 页面，再交给这里挂载。
 3. 页面资源优先使用相对路径，避免以 `/` 开头的根绝对路径。
-4. `--user` 默认必须取自页面作者工作区根目录的 basename，禁止使用 `codex`、`agent`、`assistant` 等泛名。
+4. `--user-id` 和 `--user-name` 默认必须取自页面作者工作区根目录的 basename，禁止使用 `codex`、`agent`、`assistant` 等泛名；`--user` 只能作为两者都取同一 basename 的简写。
 5. 页面注册一律优先走 `scripts/register-page.mjs` 或运行中的 `POST /api/register`。
 6. 不要直接手写或删除 `data/registry.json` 中的记录，除非脚本本身坏了。
 7. 每次重新注册页面时，入口 HTML 都应该被同步备份到 `backups/<user>/<page>/`。
@@ -59,7 +59,7 @@ $agentstage-portal
 1. 先在你自己的工作区生成静态页面。
 2. 确认入口 HTML 可以单独打开，并且资源路径是相对的。
 3. 进入这个仓库根目录，也就是包含 `server.mjs`、`package.json` 和 `skill/agentstage-portal/` 的目录。
-4. 将工作区根目录 basename 作为 `--user`；不要用 `codex` 之类的泛名。
+4. 将工作区根目录 basename 作为 `--user-id` 和 `--user-name`；不要用 `codex` 之类的泛名。
 5. 如果 portal 已在运行，优先用 `--server http://127.0.0.1:4318` 或 `POST /api/register` 完成热注册。
 6. 如果 portal 尚未运行，再启动或复用本目录的服务。
 7. 告诉用户用这个端口访问，而不是去你自己的工作区找页面。
@@ -72,7 +72,10 @@ $agentstage-portal
 cd <project-root>
 node scripts/register-page.mjs \
   --server http://127.0.0.1:4318 \
-  --user "你的工作区目录名" \
+  --user-id "你的工作区目录名" \
+  --user-name "你的工作区目录名" \
+  --workspace-root /绝对路径/到/你的工作区根目录 \
+  --source-root /绝对路径/到/页面资源根目录 \
   --page "这次展示的标题" \
   --entry /绝对路径/到/你的/index.html
 ```

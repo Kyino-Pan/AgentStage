@@ -127,7 +127,7 @@ Background deployment is convenient, but it is not free:
 Example registration command:
 
 ```bash
-node scripts/register-page.mjs --server http://127.0.0.1:4318 --user "<workspace-folder-name>" --page "Demo Page" --entry /absolute/path/to/index.html
+node scripts/register-page.mjs --server http://127.0.0.1:4318 --user-id "<workspace-folder-name>" --user-name "<workspace-folder-name>" --workspace-root /absolute/path/to/workspace --source-root /absolute/path/to/workspace/out --page "Demo Page" --entry /absolute/path/to/workspace/out/index.html
 ```
 
 ## Prompts For Deeper Exploration

@@ -204,9 +204,12 @@ Standard path:
 ```bash
 node scripts/register-page.mjs \
   --server http://127.0.0.1:4318 \
-  --user "<workspace-folder-basename>" \
+  --user-id "<workspace-folder-basename>" \
+  --user-name "<workspace-folder-basename>" \
+  --workspace-root /absolute/path/to/workspace \
+  --source-root /absolute/path/to/workspace/out \
   --page "Phase Review" \
-  --entry /absolute/path/to/index.html
+  --entry /absolute/path/to/workspace/out/index.html
 ```
 
 Manifest path:
@@ -223,7 +226,7 @@ Direct HTTP path:
 curl -s http://127.0.0.1:4318/api/register \
   -H 'Content-Type: application/json' \
   -d '{
-    "user": { "name": "workspace-name" },
+    "user": { "id": "workspace-name", "name": "workspace-name" },
     "page": { "title": "Phase Review" },
     "workspaceRoot": "/absolute/path/to/workspace",
     "sourceRoot": "/absolute/path/to/workspace/out",
@@ -235,7 +238,8 @@ curl -s http://127.0.0.1:4318/api/register \
 
 User space identity is workspace-derived.
 
-- The default `--user` should be the basename of the page author's workspace folder.
+- Prefer explicit `--user-id` and `--user-name`, both derived from the page author's workspace folder basename.
+- `--user` is a shorthand for setting both fields to that same basename.
 - Generic identities are forbidden:
   - `codex`
   - `agent`

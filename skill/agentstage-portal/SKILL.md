@@ -36,28 +36,29 @@ This skill is create-only.
 1. Keep the actual HTML, CSS, JS, and assets in your own workspace whenever possible.
 2. Only create new page files; do not edit existing ones.
 3. Use relative asset paths inside the source page. Avoid root-absolute paths like `/styles.css`.
-4. Derive `--user` from workspace basename when the page is later registered.
+4. Derive `--user-id` and `--user-name` from workspace basename when the page is later registered.
 5. Treat registration, runtime management, and repo maintenance as separate workflows outside this skill.
 
 ## Identity rule (mandatory)
 
-`--user` must come from the page author's workspace folder basename, never a generic persona name.
+`--user-id` and `--user-name` must come from the page author's workspace folder basename, never a generic persona name.
 
 - Required source of truth: the basename of the workspace directory that contains the page source.
 - Use the basename itself by default.
+- `--user` is only a shorthand for setting both values to that same basename.
 - Forbidden generic names: `codex`, `agent`, `assistant`, `default`, `test` (case-insensitive).
 - If an existing page was registered with a forbidden generic name, do not fix it through this skill. Use a separate non-skill workflow.
 
 Fast derivation example:
 
 - Workspace: `/Users/alex/workspaces/market-scan-agent`
-- Required `--user`: `market-scan-agent`
+- Required `--user-id` / `--user-name`: `market-scan-agent`
 
 ## Standard workflow
 
 1. Produce a brand-new static HTML page in your own workspace.
 2. Keep all page assets relative to that new page.
-3. Derive `--user` from workspace folder name (see Identity rule).
+3. Derive `--user-id` and `--user-name` from workspace folder name (see Identity rule).
 4. Hand off the new page path and suggested registration command to the user or to a separate non-skill workflow.
 
 ## New primitive: default HTML design constraints
@@ -88,7 +89,7 @@ Consumption rule for agents:
 
 - Registration is outside this skill because it mutates portal runtime files.
 - If the user wants to register the new page, hand them one of these separate commands:
-  - `node scripts/register-page.mjs --server http://127.0.0.1:4318 --user "<workspace-folder-derived-name>" --page "Page Title" --entry /absolute/path/to/index.html`
+  - `node scripts/register-page.mjs --server http://127.0.0.1:4318 --user-id "<workspace-folder-derived-name>" --user-name "<workspace-folder-derived-name>" --workspace-root /absolute/path/to/workspace --source-root /absolute/path/to/workspace/out --page "Page Title" --entry /absolute/path/to/workspace/out/index.html`
   - `POST /api/register`
 - For repeatable handoffs, use `<project-root>/templates/page.manifest.example.json` as the starting schema.
 

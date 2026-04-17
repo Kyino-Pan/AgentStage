@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.mjs",
     "dev": "node server.mjs",
+    "test": "node --test",
     "register": "node scripts/register-page.mjs",
     "daemon:start": "node scripts/daemon-start.mjs",
     "daemon:stop": "node scripts/daemon-stop.mjs",
