@@ -1,6 +1,6 @@
 ---
 name: "agentstage-portal"
-description: "Use when the user wants content presented as a webpage through the shared AgentStage portal, needs a static HTML page published under the common navigation, wants a page registered or updated in the running portal service, or needs the shared AgentStage daemon/launchd runtime managed."
+description: "Use when the user wants a brand-new static HTML page prepared for the shared AgentStage portal without modifying or deleting any existing files."
 ---
 
 # AgentStage Portal
@@ -8,9 +8,21 @@ description: "Use when the user wants content presented as a webpage through the
 ## When to use
 
 - The user wants a report, dashboard, prototype, comparison, or summary shown as a webpage.
-- The page should live under the shared AgentStage navigation instead of a one-off local server.
-- A new or existing static HTML page must be registered into the running AgentStage service.
-- The agent needs to operate the shared portal runtime, backups, daemon, or launchd setup.
+- The task is to create a brand-new static page, not to edit or replace an existing one.
+- The page should be prepared for the shared AgentStage navigation instead of a one-off local server.
+
+## Hard rule (highest priority)
+
+This skill is create-only.
+
+- Do not modify any existing file in any workspace or in this repository.
+- Do not delete any file.
+- The only allowed file write is creating a brand-new page output.
+- Do not update an existing page in place.
+- Do not rename or replace an existing page to simulate an update.
+- Do not edit docs, configs, scripts, registry files, backups, or design-constraint files while using this skill.
+- Do not start, stop, install, or reconfigure runtime services while using this skill.
+- If the user asks for an update to an existing page, create a new page instead or stop and ask them to use a non-skill workflow.
 
 ## Project root resolution
 
@@ -22,10 +34,10 @@ description: "Use when the user wants content presented as a webpage through the
 ## Core contract
 
 1. Keep the actual HTML, CSS, JS, and assets in your own workspace whenever possible.
-2. Register only the entry HTML into AgentStage; the project will proxy source assets from your workspace.
+2. Only create new page files; do not edit existing ones.
 3. Use relative asset paths inside the source page. Avoid root-absolute paths like `/styles.css`.
-4. Reuse the same `user-id` for related pages so the wrapper shows them in one sidebar.
-5. Re-register the page after entry-path or metadata changes. If only source assets changed, refreshing the page is enough.
+4. Derive `--user` from workspace basename when the page is later registered.
+5. Treat registration, runtime management, and repo maintenance as separate workflows outside this skill.
 
 ## Identity rule (mandatory)
 
@@ -34,7 +46,7 @@ description: "Use when the user wants content presented as a webpage through the
 - Required source of truth: the basename of the workspace directory that contains the page source.
 - Use the basename itself by default.
 - Forbidden generic names: `codex`, `agent`, `assistant`, `default`, `test` (case-insensitive).
-- If an existing page was registered with a forbidden generic name, re-register it with the workspace-derived user label.
+- If an existing page was registered with a forbidden generic name, do not fix it through this skill. Use a separate non-skill workflow.
 
 Fast derivation example:
 
@@ -43,20 +55,14 @@ Fast derivation example:
 
 ## Standard workflow
 
-1. Check whether AgentStage is already running:
-   - `cd <project-root>`
-   - `npm run daemon:status`
-2. If it is not running, start it:
-   - `npm run daemon:start`
-3. Produce or update a static HTML page in your own workspace.
-4. Derive `--user` from workspace folder name (see Identity rule).
-5. Register it into the running portal:
-   - `node scripts/register-page.mjs --server http://127.0.0.1:4318 --user "<workspace-folder-derived-name>" --page "Page Title" --entry /absolute/path/to/index.html`
-6. Tell the user the final route from the command output, usually `/users/<user-id>/pages/<page-id>`.
+1. Produce a brand-new static HTML page in your own workspace.
+2. Keep all page assets relative to that new page.
+3. Derive `--user` from workspace folder name (see Identity rule).
+4. Hand off the new page path and suggested registration command to the user or to a separate non-skill workflow.
 
 ## New primitive: default HTML design constraints
 
-Purpose: allow users to define default design constraints once, then apply them to all future portal pages with minimal tokens.
+Purpose: allow users to define default design constraints once, then apply them to future portal pages with minimal tokens.
 
 Descriptor file (skill-side):
 
@@ -72,37 +78,28 @@ Inputs:
 - `author`: who set the defaults.
 - `notes` (optional): context or rationale.
 
-Workflow:
-
-1. Read current descriptor file.
-2. Merge or replace the `constraints` list based on the user's request.
-3. Update metadata (`updated_at`, `author`).
-4. Persist descriptor file.
-5. For subsequent page-generation prompts, prepend a short line: `Apply default constraints from skill descriptor before writing HTML.`
-
 Consumption rule for agents:
 
 - When this skill is invoked for page generation, read `default-design-constraints.json` first.
 - Treat constraints as default policy unless the user explicitly overrides specific items.
-- If a user override conflicts with defaults, keep explicit user override for that task and do not silently mutate descriptor.
+- If a user override conflicts with defaults, keep explicit user override for that task and do not mutate the descriptor while using this skill.
 
-## Registration choices
+## Registration handoff
 
-- For a single page, use `scripts/register-page.mjs`.
-- For automated flows, `POST /api/register` is also supported.
+- Registration is outside this skill because it mutates portal runtime files.
+- If the user wants to register the new page, hand them one of these separate commands:
+  - `node scripts/register-page.mjs --server http://127.0.0.1:4318 --user "<workspace-folder-derived-name>" --page "Page Title" --entry /absolute/path/to/index.html`
+  - `POST /api/register`
 - For repeatable handoffs, use `<project-root>/templates/page.manifest.example.json` as the starting schema.
-- For deployment on another computer, read `references/deployment.md`.
 
-## Runtime operations
+## Not allowed from this skill
 
-- Foreground run: `npm start`
-- Background daemon: `npm run daemon:start`
-- Daemon status: `npm run daemon:status`
-- Machine bootstrap: `npm run bootstrap:machine`
-- Global skill link status: `npm run skill:status`
-- On macOS in sandboxed Codex environments, `npm run launchd:install` may require approval because it writes to `~/Library/LaunchAgents/`.
+- Runtime operations such as `npm start`, `npm run daemon:start`, `npm run bootstrap:machine`, and `npm run launchd:install`
+- Registry repair or backup manipulation
+- Default-constraint descriptor updates
+- Existing page edits, replacements, deletions, or re-registration
 
 ## Read more only when needed
 
-- For architecture, API routes, prompt templates, and troubleshooting, read `<project-root>/README_AGENT.md`.
+- For architecture, API routes, runtime commands, and troubleshooting, read `<project-root>/README_AGENT.md`.
 - For portal rules that future agents should preserve, read `<project-root>/AGENTS.md`.

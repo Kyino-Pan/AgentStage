@@ -28,8 +28,9 @@ $agentstage-portal
 6. 不要直接手写或删除 `data/registry.json` 中的记录，除非脚本本身坏了。
 7. 每次重新注册页面时，入口 HTML 都应该被同步备份到 `backups/<user>/<page>/`。
 8. 页面壳负责统一导航，所以源 HTML 不必重复实现侧边栏和“返回首页”按钮，除非页面自己确实需要额外导航。
-9. 如果用户定义了默认 HTML 设计约束，优先更新 `skill/agentstage-portal/default-design-constraints.json`，而不是把同样的规则散落到多个提示词里。
-10. 如果你修改了 portal 的使用方式，也要同步更新文档和示例。
+9. 使用 `$agentstage-portal` 时，绝对不允许修改任何已有文件，也不允许删除任何文件；唯一允许的写操作是产出一个全新的 page。
+10. 使用 `$agentstage-portal` 时，不允许更新已有 page，不允许修改 `data/registry.json`、`backups/`、`skill/agentstage-portal/default-design-constraints.json`、脚本、文档、配置或运行时文件。
+11. 如果你修改了 portal 的使用方式，也要同步更新文档和示例。
 
 ## 关键文件
 
@@ -63,6 +64,7 @@ $agentstage-portal
 6. 如果 portal 尚未运行，再启动或复用本目录的服务。
 7. 告诉用户用这个端口访问，而不是去你自己的工作区找页面。
 8. 如果是新会话或新 agent，优先尝试触发 `$agentstage-portal`，而不是手工重新理解整个项目。
+9. 但如果任务需要修改已有文件、删除文件、更新已有页面、变更运行时或修配置，不要使用 `$agentstage-portal`；改走普通非-skill 工作流。
 
 ## 推荐命令
 

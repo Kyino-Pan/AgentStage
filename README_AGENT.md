@@ -19,24 +19,30 @@ Default portal URL:
 http://127.0.0.1:4318
 ```
 
-## Fast Paths
+## Choose A Run Mode
 
-Clone and deploy on a fresh machine:
+Clone and run in the foreground:
+
+```bash
+git clone https://github.com/Kyino-Pan/AgentStage.git && cd AgentStage && npm start
+```
+
+Clone and run in the background:
 
 ```bash
 git clone https://github.com/Kyino-Pan/AgentStage.git && cd AgentStage && npm run bootstrap:machine
 ```
 
-Bootstrap from an existing checkout:
-
-```bash
-npm run bootstrap:machine
-```
-
-Foreground run:
+If the repository is already on disk, foreground run is:
 
 ```bash
 npm start
+```
+
+If the repository is already on disk, quick background run is:
+
+```bash
+npm run bootstrap:machine
 ```
 
 ## Current UX Model
@@ -55,6 +61,16 @@ npm start
 
 ## Runtime Options
 
+Foreground run:
+
+```bash
+npm start
+```
+
+- runs `server.mjs` in the current terminal
+- easiest path for active development
+- stop with `Ctrl+C`
+
 Background daemon:
 
 ```bash
@@ -63,6 +79,10 @@ npm run daemon:status
 npm run daemon:stop
 ```
 
+- starts a detached Node process
+- useful when you want the portal to keep running after the terminal closes
+- on Linux and Windows this is the default background mode used by `bootstrap:machine`
+
 macOS login-persistent runtime:
 
 ```bash
@@ -70,6 +90,9 @@ npm run launchd:install
 npm run launchd:status
 npm run launchd:uninstall
 ```
+
+- OS-native background service on macOS
+- this is the default background mode used by `bootstrap:machine` on macOS
 
 Machine bootstrap:
 
@@ -86,6 +109,93 @@ What bootstrap does:
   - other platforms: daemon
 
 In sandboxed Codex environments on macOS, `launchd:install` may request approval because it writes to `~/Library/LaunchAgents/`.
+
+## OS-Native Persistent Service Commands
+
+macOS LaunchAgent install:
+
+```bash
+node scripts/bootstrap-machine.mjs --runtime none
+npm run launchd:install
+npm run launchd:status
+```
+
+Linux `systemd --user` service install:
+
+Run these from the repo root:
+
+```bash
+node scripts/bootstrap-machine.mjs --runtime none
+mkdir -p ~/.config/systemd/user
+cat > ~/.config/systemd/user/agentstage.service <<EOF
+[Unit]
+Description=AgentStage local portal
+
+[Service]
+Type=simple
+WorkingDirectory=${PWD}
+ExecStart=$(command -v node) ${PWD}/server.mjs
+Restart=on-failure
+RestartSec=3
+Environment=HOST=127.0.0.1
+Environment=PORT=4318
+
+[Install]
+WantedBy=default.target
+EOF
+systemctl --user daemon-reload
+systemctl --user enable --now agentstage.service
+systemctl --user status agentstage.service
+```
+
+If you want the Linux user service to keep running after logout, also enable linger:
+
+```bash
+loginctl enable-linger "$USER"
+```
+
+Linux `systemd --user` service removal:
+
+```bash
+systemctl --user disable --now agentstage.service
+rm -f ~/.config/systemd/user/agentstage.service
+systemctl --user daemon-reload
+```
+
+Windows PowerShell scheduled task install:
+
+Run these from the repo root in PowerShell:
+
+```powershell
+node scripts/bootstrap-machine.mjs --runtime none
+$root = (Get-Location).Path
+$node = (Get-Command node).Source
+$action = New-ScheduledTaskAction -Execute $node -Argument "`"$root\server.mjs`"" -WorkingDirectory $root
+$trigger = New-ScheduledTaskTrigger -AtLogOn
+$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable
+Register-ScheduledTask -TaskName "AgentStage" -Action $action -Trigger $trigger -Settings $settings -Description "AgentStage local portal" -Force
+Start-ScheduledTask -TaskName "AgentStage"
+Get-ScheduledTask -TaskName "AgentStage"
+```
+
+This Windows path is login-persistent. For a machine-wide Windows service that starts before login, use an admin-managed service wrapper outside the scripts shipped in this repo.
+
+Windows scheduled task removal:
+
+```powershell
+Stop-ScheduledTask -TaskName "AgentStage"
+Unregister-ScheduledTask -TaskName "AgentStage" -Confirm:$false
+```
+
+## Background Deployment Overhead
+
+Background deployment is convenient, but it adds operating cost:
+
+- one Node process stays alive and keeps port `4318` reserved
+- daemon or service logs can accumulate over time
+- startup hooks, service units, or scheduled tasks become extra machine state to maintain
+- auto-restart behavior can make an old instance come back if you forget to disable its service definition
+- idle memory use becomes persistent, with occasional CPU wakeups even when traffic is light
 
 ## Registering A Page
 
@@ -228,57 +338,46 @@ The skill is responsible for:
 - deciding when a result should become a webpage
 - reusing the shared AgentStage portal
 - enforcing workspace-derived usernames
-- applying default design constraints from the skill descriptor
-- operating the shared runtime when needed
+- reading default design constraints from the skill descriptor when creating a new page
+
+Hard rule for this skill:
+
+- it is create-only
+- it must not modify any existing file
+- it must not delete any file
+- it may only create a brand-new page
+- runtime operations, descriptor edits, existing page updates, and registry mutations must be handled outside the skill
 
 ## Prompt Library
 
 Built-in default prompt:
 
 ```text
-Use $agentstage-portal to publish this result as a page in the shared AgentStage portal. Derive --user from the page author's workspace folder basename, apply default constraints from the skill descriptor, and give me the final route.
+Use $agentstage-portal to create a brand-new page for the shared AgentStage portal. Do not modify or delete any existing file, derive --user from the page author's workspace folder basename, apply default constraints by reading the skill descriptor only, and return the new page path plus the suggested registration command.
 ```
 
 Publish a new page:
 
 ```text
-Use $agentstage-portal to publish this result as a page in the shared portal and give me the final route.
-```
-
-Update an existing page:
-
-```text
-Use $agentstage-portal to update the existing page in place and keep the same userSpace unless the workspace name changed.
+Use $agentstage-portal to create a brand-new page for the shared portal without modifying any existing file, and give me the new page path plus the suggested registration command.
 ```
 
 Add a second page under the same userSpace:
 
 ```text
-Use $agentstage-portal to add another page under the same workspace-derived userSpace and keep the file-manager sidebar clean.
+Use $agentstage-portal to add another brand-new page under the same workspace-derived userSpace without editing any existing page.
 ```
 
-Set default HTML design constraints:
+Create a replacement as a new page instead of editing:
 
 ```text
-Use $agentstage-portal and set default HTML design constraints for future pages: keep strong whitespace, minimal chrome, and one focal area per view.
+Use $agentstage-portal to create a fresh replacement page as a new page. Do not update the old page in place.
 ```
 
-Deploy on another machine:
+What not to ask this skill to do:
 
 ```text
-Clone the repo, cd into it, run npm run bootstrap:machine, then verify skill:status and daemon:status.
-```
-
-Recover launchd on macOS:
-
-```text
-Use $agentstage-portal to verify the running AgentStage launchd service, reclaim port 4318 if an older AgentStage process is still bound, and report the health endpoint.
-```
-
-Re-register after metadata changes:
-
-```text
-Use $agentstage-portal to re-register this page with the same workspace-derived userSpace and preserve the backup HTML history.
+Do not use $agentstage-portal for updating an existing page, editing default constraints, changing runtime state, repairing registry data, or deleting files. Use a separate non-skill workflow for those tasks.
 ```
 
 ## Project Structure

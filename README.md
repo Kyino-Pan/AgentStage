@@ -12,9 +12,17 @@ Use it when multiple agents are generating static HTML in different workspaces, 
 - Hot registration updates without rebuilding every page project
 - Source HTML, CSS, JS, and assets kept in the original workspace whenever possible
 
-## One-Line Deploy
+## Choose A Run Mode
 
 Prerequisite: `git` and `node` are already installed on the machine.
+
+Foreground run:
+
+```bash
+git clone https://github.com/Kyino-Pan/AgentStage.git && cd AgentStage && npm start
+```
+
+Quick background run:
 
 ```bash
 git clone https://github.com/Kyino-Pan/AgentStage.git && cd AgentStage && npm run bootstrap:machine
@@ -22,11 +30,93 @@ git clone https://github.com/Kyino-Pan/AgentStage.git && cd AgentStage && npm ru
 
 Then open `http://127.0.0.1:4318`.
 
-If the repo is already on disk, the shortest path is:
+If the repo is already on disk:
+
+Foreground:
+
+```bash
+npm start
+```
+
+Background:
 
 ```bash
 npm run bootstrap:machine
 ```
+
+- `npm start` keeps the server attached to the current terminal and stops with `Ctrl+C`.
+- `npm run bootstrap:machine` seeds local state, installs the global skill link, and starts background runtime.
+- On macOS, `bootstrap:machine` installs a `launchd`-managed background service.
+- On Linux and Windows, `bootstrap:machine` starts a detached background daemon. If you want an OS-native persistent service, use the platform commands below.
+
+<details>
+<summary>Persistent service commands for macOS, Linux, and Windows</summary>
+
+macOS:
+
+```bash
+git clone https://github.com/Kyino-Pan/AgentStage.git && cd AgentStage && node scripts/bootstrap-machine.mjs --runtime none && npm run launchd:install
+```
+
+Linux `systemd --user` service:
+
+Run these from the repo root after cloning:
+
+```bash
+node scripts/bootstrap-machine.mjs --runtime none
+mkdir -p ~/.config/systemd/user
+cat > ~/.config/systemd/user/agentstage.service <<EOF
+[Unit]
+Description=AgentStage local portal
+
+[Service]
+Type=simple
+WorkingDirectory=${PWD}
+ExecStart=$(command -v node) ${PWD}/server.mjs
+Restart=on-failure
+RestartSec=3
+Environment=HOST=127.0.0.1
+Environment=PORT=4318
+
+[Install]
+WantedBy=default.target
+EOF
+systemctl --user daemon-reload
+systemctl --user enable --now agentstage.service
+```
+
+If you want the Linux user service to keep running after logout, also run:
+
+```bash
+loginctl enable-linger "$USER"
+```
+
+Windows PowerShell scheduled task:
+
+Run these from the repo root in PowerShell:
+
+```powershell
+node scripts/bootstrap-machine.mjs --runtime none
+$root = (Get-Location).Path
+$node = (Get-Command node).Source
+$action = New-ScheduledTaskAction -Execute $node -Argument "`"$root\server.mjs`"" -WorkingDirectory $root
+$trigger = New-ScheduledTaskTrigger -AtLogOn
+$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable
+Register-ScheduledTask -TaskName "AgentStage" -Action $action -Trigger $trigger -Settings $settings -Description "AgentStage local portal" -Force
+Start-ScheduledTask -TaskName "AgentStage"
+```
+
+This Windows path is login-persistent. For a machine-wide Windows service that starts before login, you will need an admin-managed service wrapper outside the scripts shipped in this repo.
+</details>
+
+## Background Overhead
+
+Background deployment is convenient, but it is not free:
+
+- it keeps a Node process alive and reserves port `4318`
+- it writes runtime state and logs over time
+- it adds startup hooks or service/task metadata that you may need to update or remove later
+- it creates ongoing idle memory use and occasional CPU wakeups even when nobody is browsing
 
 ## How It Works
 

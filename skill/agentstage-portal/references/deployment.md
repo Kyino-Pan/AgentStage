@@ -20,6 +20,19 @@ Behavior:
   - macOS: LaunchAgent
   - other platforms: background daemon
 
+Foreground alternative:
+
+```bash
+npm start
+```
+
+Notes:
+
+- `npm start` keeps AgentStage attached to the current terminal.
+- `npm run bootstrap:machine` starts background runtime.
+- On Linux and Windows, `bootstrap:machine` is a detached daemon, not an OS-native service.
+- For Linux `systemd --user` or Windows Task Scheduler installation commands, read `README_AGENT.md`.
+
 Note:
 
 - In sandboxed Codex environments on macOS, the LaunchAgent step may prompt for elevated permission because it writes to `~/Library/LaunchAgents/`.
