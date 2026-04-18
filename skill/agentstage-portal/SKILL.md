@@ -10,10 +10,12 @@ description: "Use when the user wants a brand-new static HTML page prepared for 
 - The user wants a report, dashboard, prototype, comparison, or summary shown as a webpage.
 - The task is to create a brand-new static page, not to edit or replace an existing one.
 - The page should be prepared for the shared AgentStage navigation instead of a one-off local server.
+- Invoking this skill means the default goal is that the resulting page becomes visible in the shared portal at `http://127.0.0.1:4318`.
 
 Important completion rule:
 
-- If the user's intent includes "show it in AgentStage", "挂到 portal", "register it", "publish it to the shared entry", or any equivalent request for the page to become visible in the running portal, then creating the HTML file is only phase 1.
+- Treat invocation of this skill itself as sufficient evidence that the default desired outcome is visibility in the running portal.
+- Creating the HTML file is therefore only phase 1 unless the user explicitly asked for file-only output, explicit handoff, or explicitly said not to register.
 - In that case, after the create-only phase finishes, the agent must immediately leave the skill phase and complete registration through the normal non-skill workflow.
 - Do not stop at "here is the registration command" unless the user explicitly asked for handoff only or explicitly said not to register.
 
@@ -49,7 +51,8 @@ This means:
 
 - create-only is a constraint on the page-generation phase
 - it is not permission to abandon an end-to-end user request halfway through
-- if the user asked for portal visibility, the agent must continue after the skill with normal registration steps
+- invoking this skill defaults to portal visibility on `http://127.0.0.1:4318`
+- the agent must continue after the skill with normal registration steps unless the user explicitly opted out
 
 ## Identity rule (mandatory)
 
@@ -76,8 +79,9 @@ Fast derivation example:
 1. Produce a brand-new static HTML page in your own workspace.
 2. Keep all page assets relative to that new page.
 3. Derive `--user-id` and `--user-name` from project identity (see Identity rule).
-4. If the user only asked for page creation, hand off the new page path and suggested registration command.
-5. If the user asked for visibility in AgentStage, immediately switch to a normal non-skill workflow and perform registration yourself. Do not wait for the user to repeat the request.
+4. By default, treat the new page as something that must become visible in AgentStage at `http://127.0.0.1:4318`.
+5. If the user explicitly asked for page creation only, hand off the new page path and suggested registration command.
+6. Otherwise, immediately switch to a normal non-skill workflow and perform registration yourself. Do not wait for the user to repeat the request.
 
 ## New primitive: default HTML design constraints
 
@@ -106,7 +110,7 @@ Consumption rule for agents:
 ## Registration follow-up
 
 - Registration is outside this skill because it mutates portal runtime files.
-- Outside this skill does not mean "leave it undone". It means registration must happen in the follow-up non-skill phase when the user's request requires visibility in the running portal.
+- Outside this skill does not mean "leave it undone". Because invoking this skill defaults to `4318` visibility, registration must happen in the immediate follow-up non-skill phase unless the user explicitly opted out.
 - If the user explicitly wants handoff only, or explicitly asks what command to run themselves, hand them one of these separate commands:
   - `node scripts/register-page.mjs --server http://127.0.0.1:4318 --user-id "<project-or-project/subproject>" --user-name "<project-or-project/subproject>" --workspace-root /absolute/path/to/workspace --source-root /absolute/path/to/workspace/out --page "Page Title" --entry /absolute/path/to/workspace/out/index.html`
   - `POST /api/register`

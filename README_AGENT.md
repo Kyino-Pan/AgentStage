@@ -361,8 +361,8 @@ Hard rule for this skill:
 
 Completion rule for real user requests:
 
-- if the user only asked for a new page file, stopping after page creation is acceptable
-- if the user asked for the page to be visible in AgentStage, page creation is only phase 1
+- invoking `$agentstage-portal` already implies the default goal is to make the page visible in AgentStage at `http://127.0.0.1:4318`
+- page creation is therefore only phase 1 unless the user explicitly asked for file-only output
 - in that case, the agent must immediately continue with the normal non-skill workflow and register the page
 - do not stop at a suggested registration command unless the user explicitly asked for handoff only
 
@@ -371,13 +371,13 @@ Completion rule for real user requests:
 Built-in default prompt:
 
 ```text
-Use $agentstage-portal to create a brand-new page for the shared AgentStage portal. Do not modify or delete any existing file during the create-only phase. Derive --user from the page author's project identity path (default `<project>`, or `<project>/<child>` for supported nested workspaces, never 3 levels). If the user also wants the page visible in the running portal, do not stop at the handoff command: after the skill phase, immediately switch to the normal non-skill workflow and register the page yourself.
+Use $agentstage-portal to create a brand-new page for the shared AgentStage portal. Invoking this skill means the default goal is to make the page visible in the running portal at `http://127.0.0.1:4318`, not merely to leave behind an HTML file. Do not modify or delete any existing file during the create-only phase. Derive --user from the page author's project identity path (default `<project>`, or `<project>/<child>` for supported nested workspaces, never 3 levels). After the skill phase, immediately switch to the normal non-skill workflow and register the page yourself unless the user explicitly asked for file-only output or handoff only.
 ```
 
 Publish a new page:
 
 ```text
-Use $agentstage-portal to create a brand-new page for the shared portal without modifying any existing file during the create-only phase. Then register it into AgentStage so it is actually visible in the shared portal.
+Use $agentstage-portal to create a brand-new page for the shared portal without modifying any existing file during the create-only phase. Treat invocation of this skill as a default requirement that the page become visible at `http://127.0.0.1:4318`, then register it into AgentStage yourself.
 ```
 
 Add a second page under the same userSpace:

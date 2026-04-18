@@ -31,8 +31,9 @@ $agentstage-portal
 9. 使用 `$agentstage-portal` 时，绝对不允许修改任何已有文件，也不允许删除任何文件；唯一允许的写操作是产出一个全新的 page。
 10. 使用 `$agentstage-portal` 时，不允许更新已有 page，不允许修改 `data/registry.json`、`backups/`、`skill/agentstage-portal/default-design-constraints.json`、脚本、文档、配置或运行时文件。
 11. 如果你修改了 portal 的使用方式，也要同步更新文档和示例。
-12. 但如果用户意图是“让页面出现在 AgentStage 里给人看”，那么 `$agentstage-portal` 只负责 phase 1 的产页；phase 2 必须紧接着切到普通非-skill 工作流主动完成注册，不能只留命令 handoff 就停下。
-13. 只有当用户明确说“只要生成 page 文件”“不要注册”“我自己来注册”时，agent 才可以停在 create-only 阶段。
+12. 调用 `$agentstage-portal` 本身，就默认意味着目标是让新页面出现在 `http://127.0.0.1:4318` 里给人看，而不只是生成一个孤立的 HTML 文件。
+13. 因此 `$agentstage-portal` 只负责 phase 1 的产页；phase 2 必须紧接着切到普通非-skill 工作流主动完成注册，不能只留命令 handoff 就停下。
+14. 只有当用户明确说“只要生成 page 文件”“不要注册”“我自己来注册”时，agent 才可以停在 create-only 阶段。
 
 ## 关键文件
 
@@ -66,8 +67,9 @@ $agentstage-portal
 6. 如果 portal 尚未运行，再启动或复用本目录的服务。
 7. 告诉用户用这个端口访问，而不是去你自己的工作区找页面。
 8. 如果是新会话或新 agent，优先尝试触发 `$agentstage-portal`，而不是手工重新理解整个项目。
-9. 如果用户要“展示/挂到 portal/注册后可见”，先用 `$agentstage-portal` 产出新 page，再立刻切到普通非-skill 工作流完成注册，不要要求用户重复下达第二次注册命令。
-10. 但如果任务需要修改已有文件、删除文件、更新已有页面、变更运行时或修配置，不要使用 `$agentstage-portal`；改走普通非-skill 工作流。
+9. 只要调用了 `$agentstage-portal`，默认就要让结果在 `http://127.0.0.1:4318` 可见；先用 `$agentstage-portal` 产出新 page，再立刻切到普通非-skill 工作流完成注册，不要要求用户重复下达第二次注册命令。
+10. 只有当用户明确要求 file-only / 不注册 / 自己注册时，才可以停在 skill 的 create-only 阶段。
+11. 但如果任务需要修改已有文件、删除文件、更新已有页面、变更运行时或修配置，不要使用 `$agentstage-portal`；改走普通非-skill 工作流。
 
 ## 推荐命令
 

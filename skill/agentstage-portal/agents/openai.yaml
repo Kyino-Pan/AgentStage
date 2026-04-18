@@ -1,6 +1,6 @@
 interface:
   display_name: "AgentStage Portal"
   short_description: "Publish webpages into the shared AgentStage portal"
-  default_prompt: "Use $agentstage-portal to create a brand-new page for the shared AgentStage portal. Do not modify or delete any existing file during the create-only phase. Derive --user from the page author's project identity path (default <project>, or <project>/<child> for supported nested workspaces, never 3 levels). If the user also wants the page visible in the running portal, do not stop at the handoff command: after the skill phase, immediately switch to the normal non-skill workflow and register the page yourself."
+  default_prompt: "Use $agentstage-portal to create a brand-new page for the shared AgentStage portal. Invoking this skill means the default goal is to make the page visible at http://127.0.0.1:4318, not merely to leave behind an HTML file. Do not modify or delete any existing file during the create-only phase. Derive --user from the page author's project identity path (default <project>, or <project>/<child> for supported nested workspaces, never 3 levels). After the skill phase, immediately switch to the normal non-skill workflow and register the page yourself unless the user explicitly asked for file-only output or handoff only."
 policy:
   allow_implicit_invocation: true
