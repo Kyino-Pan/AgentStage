@@ -3,6 +3,7 @@ const REGISTRY_POLL_INTERVAL_MS = 4000;
 
 const state = {
   deletingPageKey: null,
+  expandedProjects: new Set(),
   expandedUsers: new Set(),
   iframeRefreshNonce: 0,
   pollTimer: null,
@@ -76,6 +77,31 @@ function pageTimestamp(page) {
   return Number.isNaN(time) ? 0 : time;
 }
 
+function splitUserIdentity(userId) {
+  return String(userId ?? "")
+    .split("/")
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+}
+
+function projectIdForUser(user) {
+  return splitUserIdentity(user?.id)[0] ?? user?.id ?? "";
+}
+
+function nestedUserLabel(user) {
+  const nameSegments = String(user?.name ?? "")
+    .split(" / ")
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  if (nameSegments.length > 1) {
+    return nameSegments.slice(1).join(" / ");
+  }
+
+  const idSegments = splitUserIdentity(user?.id);
+  return idSegments.length > 1 ? idSegments.slice(1).join(" / ") : user?.name ?? user?.id ?? "";
+}
+
 function sortedPages(user) {
   return [...(user?.pages ?? [])].sort((left, right) => {
     return pageTimestamp(right) - pageTimestamp(left) || left.title.localeCompare(right.title, "zh-Hans-CN");
@@ -90,6 +116,63 @@ function sortedUsers(registry) {
   return [...registry.users].sort((left, right) => {
     return pageTimestamp(latestPage(right)) - pageTimestamp(latestPage(left)) || left.name.localeCompare(right.name, "zh-Hans-CN");
   });
+}
+
+function latestTimestampForUser(user) {
+  return pageTimestamp(latestPage(user));
+}
+
+function latestTargetRouteForUser(user) {
+  const page = latestPage(user);
+  return page?.route ?? user?.route ?? "/";
+}
+
+function buildProjectGroups(registry) {
+  const groups = new Map();
+
+  for (const user of registry.users) {
+    const projectId = projectIdForUser(user);
+    const identitySegments = splitUserIdentity(user.id);
+    const existing = groups.get(projectId) ?? {
+      projectId,
+      projectName: identitySegments[0] ?? user.name ?? user.id,
+      rootUser: null,
+      childUsers: []
+    };
+
+    if (identitySegments.length <= 1) {
+      existing.rootUser = user;
+      existing.projectName = user.name ?? existing.projectName;
+    } else {
+      existing.childUsers.push(user);
+    }
+
+    groups.set(projectId, existing);
+  }
+
+  return [...groups.values()]
+    .map((group) => {
+      const childUsers = [...group.childUsers].sort((left, right) => {
+        return latestTimestampForUser(right) - latestTimestampForUser(left) || nestedUserLabel(left).localeCompare(nestedUserLabel(right), "zh-Hans-CN");
+      });
+      const allUsers = [group.rootUser, ...childUsers].filter(Boolean);
+      const latestUser = [...allUsers].sort((left, right) => {
+        return latestTimestampForUser(right) - latestTimestampForUser(left) || (left.name ?? "").localeCompare(right.name ?? "", "zh-Hans-CN");
+      })[0] ?? null;
+
+      return {
+        ...group,
+        childUsers,
+        allUsers,
+        latestUser,
+        totalPages: allUsers.reduce((count, user) => count + (user?.pages?.length ?? 0), 0),
+        latestUpdatedAt: latestPage(latestUser)?.updatedAt ?? latestPage(latestUser)?.createdAt ?? registry.updatedAt,
+        targetRoute: group.rootUser ? latestTargetRouteForUser(group.rootUser) : latestTargetRouteForUser(latestUser)
+      };
+    })
+    .sort((left, right) => {
+      return pageTimestamp(latestPage(right.latestUser)) - pageTimestamp(latestPage(left.latestUser)) || left.projectName.localeCompare(right.projectName, "zh-Hans-CN");
+    });
 }
 
 function findRouteUser(registry, route) {
@@ -150,24 +233,67 @@ function renderHardCornerLink(label, href) {
 }
 
 function renderHome(registry) {
-  const users = sortedUsers(registry);
-  const userRows = users.length
-    ? users
-        .map((user) => {
-          const lastPage = latestPage(user);
-          const targetRoute = lastPage?.route ?? user.route;
+  const projectGroups = buildProjectGroups(registry);
+  const userRows = projectGroups.length
+    ? projectGroups
+        .map((group) => {
+          const rootPage = latestPage(group.rootUser);
+          const groupCaption = rootPage?.title ?? latestPage(group.latestUser)?.title ?? "尚未挂载页面";
+          const groupHeader = group.rootUser
+            ? `
+                <a class="space-row space-row-group" href="${escapeHtml(group.targetRoute)}" data-link>
+                  <div class="space-main">
+                    <div class="space-name">${escapeHtml(group.projectName)}</div>
+                    <div class="space-caption">${escapeHtml(groupCaption)}</div>
+                  </div>
+                  <div class="space-meta">
+                    <span>${group.totalPages} 页</span>
+                    <span>${escapeHtml(formatDate(group.latestUpdatedAt))}</span>
+                  </div>
+                </a>
+              `
+            : `
+                <div class="space-row space-row-group is-static">
+                  <div class="space-main">
+                    <div class="space-name">${escapeHtml(group.projectName)}</div>
+                    <div class="space-caption">${escapeHtml(groupCaption)}</div>
+                  </div>
+                  <div class="space-meta">
+                    <span>${group.totalPages} 页</span>
+                    <span>${escapeHtml(formatDate(group.latestUpdatedAt))}</span>
+                  </div>
+                </div>
+              `;
+
+          const childRows = group.childUsers.length
+            ? `
+                <div class="space-subspaces">
+                  ${group.childUsers
+                    .map((user) => {
+                      const lastPage = latestPage(user);
+                      return `
+                        <a class="space-row space-row-child" href="${escapeHtml(latestTargetRouteForUser(user))}" data-link>
+                          <div class="space-main">
+                            <div class="space-name">${escapeHtml(nestedUserLabel(user))}</div>
+                            <div class="space-caption">${escapeHtml(lastPage?.title ?? "尚未挂载页面")}</div>
+                          </div>
+                          <div class="space-meta">
+                            <span>${user.pageCount} 页</span>
+                            <span>${escapeHtml(formatDate(lastPage?.updatedAt ?? registry.updatedAt))}</span>
+                          </div>
+                        </a>
+                      `;
+                    })
+                    .join("")}
+                </div>
+              `
+            : "";
 
           return `
-            <a class="space-row fade-in" href="${escapeHtml(targetRoute)}" data-link>
-              <div class="space-main">
-                <div class="space-name">${escapeHtml(user.name)}</div>
-                <div class="space-caption">${escapeHtml(lastPage?.title ?? "尚未挂载页面")}</div>
-              </div>
-              <div class="space-meta">
-                <span>${user.pageCount} 页</span>
-                <span>${escapeHtml(formatDate(lastPage?.updatedAt ?? registry.updatedAt))}</span>
-              </div>
-            </a>
+            <section class="space-group fade-in">
+              ${groupHeader}
+              ${childRows}
+            </section>
           `;
         })
         .join("")
@@ -277,6 +403,7 @@ function ensurePageShell() {
 }
 
 function updatePageShell(registry, user, currentPage) {
+  state.expandedProjects.add(projectIdForUser(user));
   state.expandedUsers.add(user.id);
   ensurePageShell();
 
@@ -322,40 +449,75 @@ function updatePageShell(registry, user, currentPage) {
   }
 }
 
+function renderSidebarPageLinks(user, activeUserId, activePageId) {
+  return sortedPages(user)
+    .map((page) => {
+      return `
+        <a class="tree-page-link${user.id === activeUserId && page.id === activePageId ? " is-current" : ""}" href="${escapeHtml(page.route)}" data-link>
+          ${escapeHtml(page.title)}
+        </a>
+      `;
+    })
+    .join("");
+}
+
+function renderSidebarChildGroup(user, activeUserId, activePageId) {
+  const expanded = state.expandedUsers.has(user.id) || user.id === activeUserId;
+
+  return `
+    <section class="tree-subgroup${user.id === activeUserId ? " is-active-user" : ""}">
+      <div class="tree-head tree-head-sub">
+        <button
+          type="button"
+          class="tree-toggle"
+          data-action="toggle-user"
+          data-user-id="${escapeHtml(user.id)}"
+          aria-expanded="${expanded ? "true" : "false"}"
+          aria-label="${expanded ? "折叠" : "展开"} ${escapeHtml(user.name)}"
+        >
+          <span class="tree-caret">${expanded ? "▾" : "▸"}</span>
+        </button>
+        <a class="tree-user-link tree-user-link-sub" href="${escapeHtml(latestTargetRouteForUser(user))}" data-link>${escapeHtml(nestedUserLabel(user))}</a>
+      </div>
+      <div class="tree-pages${expanded ? " is-open" : ""}">
+        ${expanded ? renderSidebarPageLinks(user, activeUserId, activePageId) : ""}
+      </div>
+    </section>
+  `;
+}
+
 function buildSidebarTree(registry, activeUserId, activePageId) {
-  return sortedUsers(registry)
-    .map((user) => {
-      const pages = sortedPages(user);
-      const expanded = state.expandedUsers.has(user.id) || user.id === activeUserId;
-      const userTarget = latestPage(user)?.route ?? user.route;
+  const activeProjectId = splitUserIdentity(activeUserId)[0] ?? activeUserId;
+
+  return buildProjectGroups(registry)
+    .map((group) => {
+      const expanded = state.expandedProjects.has(group.projectId) || group.projectId === activeProjectId;
+      const projectLabelTag = group.rootUser
+        ? `<a class="tree-user-link" href="${escapeHtml(group.targetRoute)}" data-link>${escapeHtml(group.projectName)}</a>`
+        : `<span class="tree-user-link tree-user-label">${escapeHtml(group.projectName)}</span>`;
 
       return `
-        <section class="tree-group${user.id === activeUserId ? " is-active-user" : ""}">
+        <section class="tree-group${group.projectId === activeProjectId ? " is-active-project" : ""}">
           <div class="tree-head">
             <button
               type="button"
               class="tree-toggle"
-              data-action="toggle-user"
-              data-user-id="${escapeHtml(user.id)}"
+              data-action="toggle-project"
+              data-project-id="${escapeHtml(group.projectId)}"
               aria-expanded="${expanded ? "true" : "false"}"
-              aria-label="${expanded ? "折叠" : "展开"} ${escapeHtml(user.name)}"
+              aria-label="${expanded ? "折叠" : "展开"} ${escapeHtml(group.projectName)}"
             >
               <span class="tree-caret">${expanded ? "▾" : "▸"}</span>
             </button>
-            <a class="tree-user-link" href="${escapeHtml(userTarget)}" data-link>${escapeHtml(user.name)}</a>
+            ${projectLabelTag}
           </div>
-          <div class="tree-pages${expanded ? " is-open" : ""}">
+          <div class="tree-project-body${expanded ? " is-open" : ""}">
             ${
               expanded
-                ? pages
-                    .map((page) => {
-                      return `
-                        <a class="tree-page-link${page.id === activePageId ? " is-current" : ""}" href="${escapeHtml(page.route)}" data-link>
-                          ${escapeHtml(page.title)}
-                        </a>
-                      `;
-                    })
-                    .join("")
+                ? `
+                    ${group.rootUser ? `<div class="tree-pages is-open">${renderSidebarPageLinks(group.rootUser, activeUserId, activePageId)}</div>` : ""}
+                    ${group.childUsers.map((user) => renderSidebarChildGroup(user, activeUserId, activePageId)).join("")}
+                  `
                 : ""
             }
           </div>
@@ -545,6 +707,19 @@ document.addEventListener("click", (event) => {
           state.expandedUsers.delete(userId);
         } else {
           state.expandedUsers.add(userId);
+        }
+        renderCurrentRoute();
+      }
+      return;
+    }
+
+    if (action === "toggle-project") {
+      const projectId = actionTarget.getAttribute("data-project-id");
+      if (projectId) {
+        if (state.expandedProjects.has(projectId)) {
+          state.expandedProjects.delete(projectId);
+        } else {
+          state.expandedProjects.add(projectId);
         }
         renderCurrentRoute();
       }
