@@ -359,18 +359,25 @@ Hard rule for this skill:
 - it may only create a brand-new page
 - runtime operations, descriptor edits, existing page updates, and registry mutations must be handled outside the skill
 
+Completion rule for real user requests:
+
+- if the user only asked for a new page file, stopping after page creation is acceptable
+- if the user asked for the page to be visible in AgentStage, page creation is only phase 1
+- in that case, the agent must immediately continue with the normal non-skill workflow and register the page
+- do not stop at a suggested registration command unless the user explicitly asked for handoff only
+
 ## Prompt Library
 
 Built-in default prompt:
 
 ```text
-Use $agentstage-portal to create a brand-new page for the shared AgentStage portal. Do not modify or delete any existing file, derive --user from the page author's project identity path (default `<project>`, or `<project>/<child>` for supported nested workspaces, never 3 levels), apply default constraints by reading the skill descriptor only, and return the new page path plus the suggested registration command.
+Use $agentstage-portal to create a brand-new page for the shared AgentStage portal. Do not modify or delete any existing file during the create-only phase. Derive --user from the page author's project identity path (default `<project>`, or `<project>/<child>` for supported nested workspaces, never 3 levels). If the user also wants the page visible in the running portal, do not stop at the handoff command: after the skill phase, immediately switch to the normal non-skill workflow and register the page yourself.
 ```
 
 Publish a new page:
 
 ```text
-Use $agentstage-portal to create a brand-new page for the shared portal without modifying any existing file, and give me the new page path plus the suggested registration command.
+Use $agentstage-portal to create a brand-new page for the shared portal without modifying any existing file during the create-only phase. Then register it into AgentStage so it is actually visible in the shared portal.
 ```
 
 Add a second page under the same userSpace:
