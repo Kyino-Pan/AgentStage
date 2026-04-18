@@ -312,6 +312,18 @@ Registration updates:
 
 - returns the current registry view model used by the portal frontend
 
+`GET /api/update-status`
+
+- returns cached or freshly checked GitHub update status for this local clone
+
+`POST /api/update-preference`
+
+- sets update mode to `manual` or `auto`
+
+`POST /api/update-dismiss`
+
+- hides the current update badge until a newer remote commit appears
+
 `POST /api/register`
 
 - registers or updates a page at runtime
@@ -342,6 +354,7 @@ Skill management:
 npm run skill:install
 npm run skill:status
 npm run skill:uninstall
+npm run check-update
 ```
 
 The skill is responsible for:

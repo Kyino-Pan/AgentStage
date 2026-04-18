@@ -42,6 +42,7 @@ Note:
 ```bash
 npm run skill:status
 npm run daemon:status
+npm run check-update
 ```
 
 On macOS also check:

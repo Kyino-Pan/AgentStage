@@ -13,6 +13,7 @@ Use it when multiple agents are generating static HTML in different workspaces, 
 - One light wrapper shell around embedded pages
 - Hot registration updates without rebuilding every page project
 - Source HTML, CSS, JS, and assets kept in the original workspace whenever possible
+- An About page that checks GitHub updates and lets you auto-update or ignore the current version
 
 ## Choose A Run Mode
 
@@ -119,6 +120,20 @@ Background deployment is convenient, but it is not free:
 - it writes runtime state and logs over time
 - it adds startup hooks or service/task metadata that you may need to update or remove later
 - it creates ongoing idle memory use and occasional CPU wakeups even when nobody is browsing
+
+## Check For Updates
+
+CLI check:
+
+```bash
+npm run check-update
+```
+
+Portal check:
+
+- Open the About page to see the current local commit, remote commit, and latest check time
+- When a new GitHub update is available, the About entry shows a red dot
+- From the About page, the user can enable auto-update or ignore the current available version
 
 ## How It Works
 

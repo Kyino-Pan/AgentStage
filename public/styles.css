@@ -89,6 +89,24 @@ button {
   backdrop-filter: blur(18px);
 }
 
+.corner-link.has-alert,
+.subtle-link.has-alert {
+  position: relative;
+}
+
+.corner-link.has-alert::before,
+.subtle-link.has-alert::before {
+  content: "";
+  position: absolute;
+  top: 0.32rem;
+  left: 0.38rem;
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 999px;
+  background: #ff3b30;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.92);
+}
+
 .corner-link:hover {
   color: var(--ink);
 }
@@ -290,6 +308,104 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.9rem;
   margin-top: 1.45rem;
+}
+
+.about-update-card {
+  margin-top: 1.45rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.about-update-card.is-alert {
+  border-color: rgba(255, 59, 48, 0.18);
+  background: rgba(255, 250, 250, 0.88);
+}
+
+.about-update-card.is-warning {
+  border-color: rgba(255, 149, 0, 0.18);
+  background: rgba(255, 252, 245, 0.88);
+}
+
+.about-update-card.is-ok {
+  border-color: rgba(10, 132, 255, 0.12);
+}
+
+.about-update-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.about-update-head h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.about-update-head p {
+  margin: 0.35rem 0 0;
+  color: var(--ink-soft);
+  line-height: 1.58;
+}
+
+.about-update-mode {
+  padding: 0.34rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.about-update-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.about-update-item {
+  display: grid;
+  gap: 0.16rem;
+  padding: 0.75rem 0.82rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.about-update-item span {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.about-update-item strong {
+  font-size: 0.96rem;
+  font-weight: 600;
+}
+
+.about-update-note {
+  margin-top: 0.85rem;
+  padding: 0.82rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.52);
+  color: var(--ink-soft);
+  line-height: 1.58;
+}
+
+.about-update-note.is-warning {
+  border-color: rgba(255, 149, 0, 0.18);
+  color: #9a5b00;
+}
+
+.about-update-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.95rem;
 }
 
 .about-block {
@@ -501,6 +617,11 @@ code {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.about-link {
+  position: relative;
+  padding-left: 0.7rem;
 }
 
 .chrome-button {

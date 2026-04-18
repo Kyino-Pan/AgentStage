@@ -4,5 +4,6 @@
 runtime/
 backups/
 data/registry.json
+data/update-state.json
 launchd/com.agentstage.daemon.plist
 *.log

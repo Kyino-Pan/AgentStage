@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { DEFAULT_HOST, DEFAULT_PORT, PROJECT_ROOT, PUBLIC_DIR } from "./lib/config.mjs";
 import { registerPage, unregisterPage } from "./lib/register-page.mjs";
 import { ensureRegistryFile, findPage, loadRegistry, toPosixPath } from "./lib/registry.mjs";
+import { dismissCurrentUpdate, getUpdateStatus, setUpdateMode } from "./lib/update.mjs";
 
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
@@ -244,6 +245,27 @@ const server = http.createServer(async (request, response) => {
     if (request.method === "GET" && requestUrl.pathname === "/api/registry") {
       const registry = await loadRegistry();
       sendJson(response, 200, buildViewModel(registry));
+      return;
+    }
+
+    if (request.method === "GET" && requestUrl.pathname === "/api/update-status") {
+      const force = requestUrl.searchParams.get("force") === "1";
+      const status = await getUpdateStatus({ force });
+      sendJson(response, 200, status);
+      return;
+    }
+
+    if (request.method === "POST" && requestUrl.pathname === "/api/update-preference") {
+      const payload = await readJsonBody(request);
+      const status = await setUpdateMode(payload.mode);
+      sendJson(response, 200, status);
+      return;
+    }
+
+    if (request.method === "POST" && requestUrl.pathname === "/api/update-dismiss") {
+      const payload = await readJsonBody(request);
+      const status = await dismissCurrentUpdate(payload.remoteCommit);
+      sendJson(response, 200, status);
       return;
     }
 
