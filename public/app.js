@@ -2,6 +2,7 @@ const app = document.querySelector("#app");
 const REGISTRY_POLL_INTERVAL_MS = 4000;
 
 const state = {
+  deletingPageKey: null,
   expandedUsers: new Set(),
   iframeRefreshNonce: 0,
   pollTimer: null,
@@ -63,6 +64,10 @@ function withCacheBust(url, nonce) {
   const absolute = new URL(url, window.location.origin);
   absolute.searchParams.set("_agentstage", String(nonce));
   return `${absolute.pathname}${absolute.search}`;
+}
+
+function deletePageApiUrl(userId, pageId) {
+  return `/api/users/${encodeURIComponent(userId)}/pages/${encodeURIComponent(pageId)}`;
 }
 
 function pageTimestamp(page) {
@@ -138,6 +143,10 @@ function navigate(href, { replace = false } = {}) {
 
 function renderCornerLink(label, href) {
   return `<a class="corner-link" href="${escapeHtml(href)}" data-link>${escapeHtml(label)}</a>`;
+}
+
+function renderHardCornerLink(label, href) {
+  return `<a class="corner-link" href="${escapeHtml(href)}">${escapeHtml(label)}</a>`;
 }
 
 function renderHome(registry) {
@@ -247,8 +256,12 @@ function ensurePageShell() {
             <div class="viewer-actions">
               <a class="chrome-button" href="/" data-link>返回导航首页</a>
               <button type="button" class="chrome-button" data-action="refresh-current">刷新当前视图</button>
+              <button type="button" class="chrome-button chrome-button-danger" data-action="delete-current-page">删除当前页面</button>
             </div>
-            <a class="subtle-link" href="/about" data-link>关于</a>
+            <div class="viewer-meta">
+              <div class="viewer-context"></div>
+              <a class="subtle-link" href="/about" data-link>关于</a>
+            </div>
           </header>
 
           <div class="viewer-frame">
@@ -270,6 +283,21 @@ function updatePageShell(registry, user, currentPage) {
   const treeRoot = app.querySelector(".tree-root");
   if (treeRoot) {
     treeRoot.innerHTML = buildSidebarTree(registry, user.id, currentPage.id);
+  }
+
+  const viewerContext = app.querySelector(".viewer-context");
+  if (viewerContext) {
+    viewerContext.textContent = `${user.name} / ${currentPage.title}`;
+  }
+
+  const deleteButton = app.querySelector('[data-action="delete-current-page"]');
+  if (deleteButton instanceof HTMLButtonElement) {
+    const deleting = state.deletingPageKey === pageShellKey(user.id, currentPage.id);
+    deleteButton.dataset.userId = user.id;
+    deleteButton.dataset.pageId = currentPage.id;
+    deleteButton.dataset.pageTitle = currentPage.title;
+    deleteButton.disabled = deleting;
+    deleteButton.textContent = deleting ? "删除中..." : "删除当前页面";
   }
 
   const iframe = app.querySelector(".viewer-frame iframe");
@@ -348,6 +376,9 @@ function renderNotFound() {
       <section class="empty-card fade-in">
         <h2>没有找到这个页面</h2>
         <p>当前路径没有对应的 userSpace 或页面。返回导航首页重新选择。</p>
+        <div class="empty-actions">
+          <a class="primary-link-button" href="/" data-link>一键回到主页</a>
+        </div>
       </section>
     </main>
   `;
@@ -360,6 +391,19 @@ async function loadRegistry() {
   }
 
   return response.json();
+}
+
+async function deleteDeployedPage(userId, pageId) {
+  const response = await fetch(deletePageApiUrl(userId, pageId), {
+    method: "DELETE"
+  });
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(payload.detail || `Failed to delete page: ${response.status}`);
+  }
+
+  return payload;
 }
 
 function renderCurrentRoute() {
@@ -407,7 +451,7 @@ function renderCurrentRoute() {
   renderNotFound();
 }
 
-async function syncRegistry({ forceRender = false } = {}) {
+async function syncRegistry({ forceRender = false, suppressRender = false } = {}) {
   try {
     const nextRegistry = await loadRegistry();
     const previousRegistry = state.registry;
@@ -419,20 +463,57 @@ async function syncRegistry({ forceRender = false } = {}) {
 
     state.registry = nextRegistry;
 
-    if (forceRender || changed) {
+    if (!suppressRender && (forceRender || changed)) {
       renderCurrentRoute();
     }
   } catch (error) {
     app.innerHTML = `
       <main class="about-shell">
-        ${renderCornerLink("返回首页", "/")}
+        ${renderHardCornerLink("返回首页", "/")}
         <section class="empty-card fade-in">
           <h2>加载失败</h2>
           <p>${escapeHtml(error instanceof Error ? error.message : String(error))}</p>
-          <button type="button" class="chrome-button" data-action="refresh-current">重试</button>
+          <div class="empty-actions">
+            <button type="button" class="chrome-button" data-action="refresh-current">重试</button>
+            <a class="primary-link-button" href="/">重新加载首页</a>
+          </div>
         </section>
       </main>
     `;
+  }
+}
+
+async function handleCurrentPageDelete(button) {
+  const userId = button.dataset.userId;
+  const pageId = button.dataset.pageId;
+  const pageTitle = button.dataset.pageTitle ?? "当前页面";
+
+  if (!userId || !pageId) {
+    return;
+  }
+
+  const confirmed = window.confirm(`确认删除已部署页面“${pageTitle}”？\n\n这只会从 AgentStage 中卸载页面，并删除本仓库里的备份，不会删除源工作区文件。`);
+  if (!confirmed) {
+    return;
+  }
+
+  const deletingKey = pageShellKey(userId, pageId);
+  state.deletingPageKey = deletingKey;
+  renderCurrentRoute();
+
+  try {
+    const result = await deleteDeployedPage(userId, pageId);
+    state.deletingPageKey = null;
+    await syncRegistry({ suppressRender: true });
+    navigate(result.nextRoute || "/", { replace: true });
+
+    if (result.warning) {
+      window.alert(`页面已卸载，但清理备份时出现提示：${result.warning}`);
+    }
+  } catch (error) {
+    state.deletingPageKey = null;
+    renderCurrentRoute();
+    window.alert(error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -467,6 +548,11 @@ document.addEventListener("click", (event) => {
         }
         renderCurrentRoute();
       }
+      return;
+    }
+
+    if (action === "delete-current-page" && actionTarget instanceof HTMLButtonElement) {
+      handleCurrentPageDelete(actionTarget);
       return;
     }
   }

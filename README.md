@@ -127,8 +127,15 @@ Background deployment is convenient, but it is not free:
 Example registration command:
 
 ```bash
-node scripts/register-page.mjs --server http://127.0.0.1:4318 --user-id "<workspace-folder-name>" --user-name "<workspace-folder-name>" --workspace-root /absolute/path/to/workspace --source-root /absolute/path/to/workspace/out --page "Demo Page" --entry /absolute/path/to/workspace/out/index.html
+node scripts/register-page.mjs --server http://127.0.0.1:4318 --user-id "<project-name-or-project/subproject>" --user-name "<project-name-or-project/subproject>" --workspace-root /absolute/path/to/workspace --source-root /absolute/path/to/workspace/out --page "Demo Page" --entry /absolute/path/to/workspace/out/index.html
 ```
+
+Identity rule:
+
+- default userSpace identity is one level: `<project>`
+- if the page lives under a supported container such as `agentSpace/<child>`, AgentStage can derive a two-level identity: `<project>/<child>`
+- third-level identities are intentionally rejected for now
+- if an agent passes only the leaf child name from a supported nested workspace, AgentStage will normalize it to `<project>/<child>`
 
 ## Prompts For Deeper Exploration
 

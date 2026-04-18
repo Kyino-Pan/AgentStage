@@ -8,6 +8,7 @@
     "dev": "node server.mjs",
     "test": "node --test",
     "register": "node scripts/register-page.mjs",
+    "registry:normalize-identities": "node scripts/normalize-registry-identities.mjs",
     "daemon:start": "node scripts/daemon-start.mjs",
     "daemon:stop": "node scripts/daemon-stop.mjs",
     "daemon:status": "node scripts/daemon-status.mjs",

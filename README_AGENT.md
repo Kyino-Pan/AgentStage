@@ -204,8 +204,8 @@ Standard path:
 ```bash
 node scripts/register-page.mjs \
   --server http://127.0.0.1:4318 \
-  --user-id "<workspace-folder-basename>" \
-  --user-name "<workspace-folder-basename>" \
+  --user-id "<project-name-or-project/subproject>" \
+  --user-name "<project-name-or-project/subproject>" \
   --workspace-root /absolute/path/to/workspace \
   --source-root /absolute/path/to/workspace/out \
   --page "Phase Review" \
@@ -238,8 +238,11 @@ curl -s http://127.0.0.1:4318/api/register \
 
 User space identity is workspace-derived.
 
-- Prefer explicit `--user-id` and `--user-name`, both derived from the page author's workspace folder basename.
-- `--user` is a shorthand for setting both fields to that same basename.
+- Prefer explicit `--user-id` and `--user-name`, both derived from the page author's project identity.
+- Default identity is `<project>`.
+- If the page author lives under a supported second-level container such as `agentSpace/<child>`, identity may be promoted to `<project>/<child>`.
+- `--user` is a shorthand for setting both fields to that same identity path.
+- Third-level identities are intentionally blocked for now.
 - Generic identities are forbidden:
   - `codex`
   - `agent`
@@ -247,11 +250,15 @@ User space identity is workspace-derived.
   - `default`
   - `test`
 - If a generic name is passed, registration logic will try to derive a better user identity from the source workspace.
+- If an agent passes only the leaf child name from a supported nested workspace, registration logic will normalize it to `<project>/<child>`.
 
 Example:
 
-- workspace root: `/Users/alex/workspaces/market-scan-agent`
+- project root page: `/Users/alex/workspaces/market-scan-agent`
 - required user name: `market-scan-agent`
+
+- nested agent page: `/Users/alex/workspaces/iditor/agentSpace/Ming-TaskSystemMaintenanceEngineer`
+- normalized user name: `iditor / Ming-TaskSystemMaintenanceEngineer`
 
 ## Default HTML Design Constraints
 
@@ -357,7 +364,7 @@ Hard rule for this skill:
 Built-in default prompt:
 
 ```text
-Use $agentstage-portal to create a brand-new page for the shared AgentStage portal. Do not modify or delete any existing file, derive --user from the page author's workspace folder basename, apply default constraints by reading the skill descriptor only, and return the new page path plus the suggested registration command.
+Use $agentstage-portal to create a brand-new page for the shared AgentStage portal. Do not modify or delete any existing file, derive --user from the page author's project identity path (default `<project>`, or `<project>/<child>` for supported nested workspaces, never 3 levels), apply default constraints by reading the skill descriptor only, and return the new page path plus the suggested registration command.
 ```
 
 Publish a new page:

@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { DEFAULT_HOST, DEFAULT_PORT, PROJECT_ROOT, PUBLIC_DIR } from "./lib/config.mjs";
-import { registerPage } from "./lib/register-page.mjs";
+import { registerPage, unregisterPage } from "./lib/register-page.mjs";
 import { ensureRegistryFile, findPage, loadRegistry, toPosixPath } from "./lib/registry.mjs";
 
 const MIME_TYPES = {
@@ -37,6 +37,10 @@ function sendText(response, statusCode, text, contentType = "text/plain; charset
     "Cache-Control": "no-store"
   });
   response.end(text);
+}
+
+function statusCodeForError(error) {
+  return error && typeof error === "object" && Number.isInteger(error.statusCode) ? error.statusCode : 500;
 }
 
 async function readJsonBody(request) {
@@ -250,6 +254,17 @@ const server = http.createServer(async (request, response) => {
       return;
     }
 
+    const deleteMatches = requestUrl.pathname.match(/^\/api\/users\/([^/]+)\/pages\/([^/]+)$/);
+    if (request.method === "DELETE" && deleteMatches) {
+      const [, rawUserId, rawPageId] = deleteMatches;
+      const result = await unregisterPage({
+        userId: decodeURIComponent(rawUserId),
+        pageId: decodeURIComponent(rawPageId)
+      });
+      sendJson(response, 200, result);
+      return;
+    }
+
     if (requestUrl.pathname.startsWith("/source/")) {
       await serveMountedSource(response, requestUrl);
       return;
@@ -276,8 +291,9 @@ const server = http.createServer(async (request, response) => {
 
     await serveFile(response, path.join(PUBLIC_DIR, "index.html"), requestUrl.pathname);
   } catch (error) {
-    sendJson(response, 500, {
-      error: "Internal server error",
+    const statusCode = statusCodeForError(error);
+    sendJson(response, statusCode, {
+      error: statusCode === 500 ? "Internal server error" : "Request failed",
       detail: error instanceof Error ? error.message : String(error)
     });
   }

@@ -27,7 +27,7 @@ function parseArgs(argv) {
 function usage() {
   return [
     "Usage:",
-    "  node scripts/register-page.mjs --user-id \"workspace-folder-name\" --user-name \"workspace-folder-name\" --workspace-root /abs/path/to/workspace --page \"Phase Review\" --entry /abs/path/to/index.html",
+    "  node scripts/register-page.mjs --user-id \"project-name-or-project/subproject\" --user-name \"project-name-or-project/subproject\" --workspace-root /abs/path/to/workspace --page \"Phase Review\" --entry /abs/path/to/index.html",
     "  node scripts/register-page.mjs --manifest ./templates/page.manifest.example.json",
     "  node scripts/register-page.mjs --server http://127.0.0.1:4318 --manifest ./templates/page.manifest.example.json",
     "",
